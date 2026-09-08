@@ -73,8 +73,9 @@ export class ServerManager {
       try {
         const handle = await startHttpServer({
           host: settings.host,
+          allowedHosts: settings.allowedHosts,
           port: settings.port,
-          bearerToken: settings.bearerToken || undefined,
+          bearerToken: settings.bearerToken,
           // Streamable HTTP keeps one transport attached to each McpServer.
           // Returning the same server instance for a second session causes the
           // SDK to reject the second connect. Build a fresh server for every

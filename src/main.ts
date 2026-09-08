@@ -1,6 +1,7 @@
 import { FileSystemAdapter, Plugin } from "obsidian";
 import {
   DEFAULT_SETTINGS,
+  getMachineHosts,
   McpSettingsTab,
   type Settings,
 } from "./settings";
@@ -73,7 +74,12 @@ export default class McpProPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const saved = await this.loadData();
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, saved);
+    if (!saved || !Object.prototype.hasOwnProperty.call(saved, "allowedHosts")) {
+      this.settings.allowedHosts = getMachineHosts();
+      await this.saveSettings();
+    }
   }
 
   async saveSettings(): Promise<void> {

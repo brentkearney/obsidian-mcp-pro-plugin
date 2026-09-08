@@ -6,12 +6,22 @@ import {
   type ButtonComponent,
   type Plugin,
 } from "obsidian";
+import { hostname, networkInterfaces } from "node:os";
 import type { ServerManager } from "./server-manager";
 
 const HOST_RE = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/i;
 
+export function getMachineHosts(): string[] {
+  const localHostname = hostname();
+  const addresses = Object.values(networkInterfaces()).flatMap((entries) =>
+    (entries ?? []).filter((entry) => entry.family === "IPv4" && !entry.internal).map((entry) => entry.address),
+  );
+  return [...new Set([localHostname, localHostname.split(".")[0]!, ...addresses])];
+}
+
 export interface Settings {
   host: string;
+  allowedHosts: string[];
   port: number;
   bearerToken: string;
   vaultName: string;
@@ -20,6 +30,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   host: "127.0.0.1",
+  allowedHosts: [],
   port: 3333,
   bearerToken: "",
   vaultName: "",
@@ -67,7 +78,7 @@ export class McpSettingsTab extends PluginSettingTab {
       }
       if (s.status === "running") {
         status.createEl("div", {
-          text: "Note: host/port/token changes require a restart.",
+          text: "Note: host, allowed hosts, port, and token changes require stopping and starting the server.",
           cls: "mcp-status-hint setting-item-description",
         });
       }
@@ -126,6 +137,27 @@ export class McpSettingsTab extends PluginSettingTab {
     containerEl.appendChild(hostWarning);
 
     new Setting(containerEl)
+      .setName("Automatically allowed hosts")
+      .setDesc("localhost and 127.0.0.1 only. Bare values and values with the server's listening port are accepted.");
+
+    new Setting(containerEl)
+      .setName("Additional allowed hosts")
+      .setDesc(
+        "One destination hostname or IP per line—not connecting machines. Bare entries allow the host alone or with the server's listening port. Use host:port for another exact port. Omit schemes, paths, and wildcards. Stop and start the server to apply changes.",
+      )
+      .addTextArea((t) => {
+        t.inputEl.rows = 4;
+        t.inputEl.cols = 28;
+        t.inputEl.setAttribute("aria-label", "Additional allowed hosts");
+        t
+          .setValue(plugin.settings.allowedHosts.join("\n"))
+          .onChange(async (v) => {
+            plugin.settings.allowedHosts = v.split(/\r?\n/).map((host) => host.trim()).filter(Boolean);
+            await plugin.saveSettings();
+          });
+      });
+
+    new Setting(containerEl)
       .setName("Port")
       .setDesc("HTTP port to listen on (1–65535).")
       .addText((t) => {
@@ -145,7 +177,7 @@ export class McpSettingsTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Bearer token")
       .setDesc(
-        "Optional. If set, clients must send Authorization: Bearer <token>.",
+        "Required. Clients must send Authorization: Bearer <token>.",
       )
       .addText((t) => {
         t.inputEl.type = "password";
