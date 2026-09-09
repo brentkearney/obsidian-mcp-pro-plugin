@@ -138,7 +138,7 @@ export class McpSettingsTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Automatically allowed hosts")
-      .setDesc("localhost and 127.0.0.1 only. Bare values and values with the server's listening port are accepted.");
+      .setDesc("localhost, 127.0.0.1, [::1], and the bind address, each with the server's listening port.");
 
     new Setting(containerEl)
       .setName("Additional allowed hosts")

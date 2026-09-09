@@ -55,9 +55,9 @@ Then copy `main.js` + `manifest.json` into your vault's plugin folder as above.
 
 ### Allowed hosts
 
-**Automatically allowed hosts** contains only `localhost` and `127.0.0.1`.
-The server does not automatically allow machine hostnames, interface IPs, the
-bind address, or IPv6 loopback.
+The server always accepts `localhost`, `127.0.0.1`, `[::1]`, and the bind
+address, each with the listening port. Machine hostnames and interface IPs are
+not automatic.
 
 When no saved host list exists, **Additional allowed hosts** is populated once
 with the detected full hostname, short hostname, and non-loopback IPv4 addresses,
@@ -69,9 +69,11 @@ one per line. These are HTTP `Host` values, not connecting machines:
 
 - A bare entry such as `vault.example.com` accepts that value alone or with the
   server's listening port. On port `3339`, it also accepts `vault.example.com:3339`,
-  but not `vault.example.com:443`.
+  but not `vault.example.com:443`. The port-qualified form is derived at start
+  time, so changing the port does not strand a saved entry.
 - An explicit entry such as `vault.example.com:443` allows only that host and port.
-- IPv6 accepts bare or bracketed addresses; use `[2001:db8::1]:443` for an explicit port.
+- IPv6 accepts bare or bracketed addresses; bare literals are bracketed for you.
+  Use `[2001:db8::1]:443` for an explicit port.
 - Omit URL schemes, paths, and wildcards. Blank lines and surrounding whitespace
   are ignored. An empty list keeps the automatic defaults.
 - Click **Stop**, then **Start**, to apply host-list or port changes.
