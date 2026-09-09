@@ -1,7 +1,7 @@
 import { Notice } from "obsidian";
-import { isIP } from "node:net";
 import type { HttpServerHandle } from "obsidian-mcp-pro";
 import { buildMcpServer, startHttpServer } from "obsidian-mcp-pro";
+import { expandHosts } from "./hosts";
 import type { Settings } from "./settings";
 
 export type ServerStatus = "stopped" | "starting" | "running" | "error";
@@ -14,26 +14,6 @@ export interface ServerState {
 }
 
 type Listener = (state: ServerState) => void;
-
-/**
- * The library matches the HTTP `Host` header verbatim, so an entry saved as a
- * bare hostname never matches a client that includes the port — which every
- * client does unless the port is 80. Derive the port-qualified form here
- * instead of persisting it: the settings list stays editable, and it follows
- * the port when the user changes it. Bare IPv6 literals are bracketed to match
- * the form a client actually sends.
- */
-export function expandHosts(entries: string[], port: number): string[] {
-  const expanded = new Set<string>();
-  for (const entry of entries) {
-    const host = isIP(entry) === 6 ? `[${entry}]` : entry;
-    expanded.add(host);
-    if (!host.includes(":") || host.endsWith("]")) {
-      expanded.add(`${host}:${port}`);
-    }
-  }
-  return [...expanded];
-}
 
 /**
  * Runs the MCP HTTP server in-process (inside the app's renderer Node).

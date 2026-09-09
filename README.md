@@ -59,27 +59,28 @@ The server always accepts `localhost`, `127.0.0.1`, `[::1]`, and the bind
 address, each with the listening port. Machine hostnames and interface IPs are
 not automatic.
 
-When no saved host list exists, **Additional allowed hosts** is populated once
-with the detected full hostname, short hostname, and non-loopback IPv4 addresses,
-then saved. Subsequent starts use that saved list without adding detected hosts.
-Existing saved lists—including an empty list—are preserved.
-
-Use **Additional allowed hosts** for other destination hostnames or IP addresses,
-one per line. These are HTTP `Host` values, not connecting machines:
+**Additional allowed hosts** starts empty. Add other destination hostnames or
+IP addresses, one per line — these are HTTP `Host` values, not connecting
+machines. **Detect this machine** appends this machine's hostname and
+non-loopback IPv4 addresses; nothing is added without that click.
 
 - A bare entry such as `vault.example.com` accepts that value alone or with the
   server's listening port. On port `3339`, it also accepts `vault.example.com:3339`,
-  but not `vault.example.com:443`. The port-qualified form is derived at start
-  time, so changing the port does not strand a saved entry.
+  but not `vault.example.com:443`. The port-qualified form is derived at start,
+  so changing the port does not strand a saved entry.
 - An explicit entry such as `vault.example.com:443` allows only that host and port.
 - IPv6 accepts bare or bracketed addresses; bare literals are bracketed for you.
   Use `[2001:db8::1]:443` for an explicit port.
-- Omit URL schemes, paths, and wildcards. Blank lines and surrounding whitespace
-  are ignored. An empty list keeps the automatic defaults.
+- Entries are lowercased, and internationalized names are converted to punycode
+  at start. A `Host` header carrying uppercase or Unicode is rejected before it
+  reaches the allowlist, so those forms cannot be allowed by spelling them that
+  way here.
+- Schemes, paths, and `*` are rejected as you type; `*` is not a wildcard
+  anywhere in this stack. Blank lines and surrounding whitespace are ignored.
 - Click **Stop**, then **Start**, to apply host-list or port changes.
 
-Bearer authentication remains required. To connect through a proxy, use its
-client-facing MCP URL rather than the local bind URL in **Copy JSON**.
+To connect through a proxy, use its client-facing MCP URL rather than the local
+bind URL in **Copy JSON**.
 
 ## Security
 

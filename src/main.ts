@@ -1,10 +1,5 @@
 import { FileSystemAdapter, Plugin } from "obsidian";
-import {
-  DEFAULT_SETTINGS,
-  getMachineHosts,
-  McpSettingsTab,
-  type Settings,
-} from "./settings";
+import { DEFAULT_SETTINGS, McpSettingsTab, type Settings } from "./settings";
 import { ServerManager } from "./server-manager";
 
 export default class McpProPlugin extends Plugin {
@@ -74,12 +69,13 @@ export default class McpProPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    const saved = await this.loadData();
+    const saved = (await this.loadData()) as Partial<Settings> | null;
     this.settings = Object.assign({}, DEFAULT_SETTINGS, saved);
-    if (!saved || !Object.prototype.hasOwnProperty.call(saved, "allowedHosts")) {
-      this.settings.allowedHosts = getMachineHosts();
-      await this.saveSettings();
-    }
+    // Never share DEFAULT_SETTINGS' array, and never trust a hand-edited
+    // data.json: a non-array here would break the settings tab on open.
+    this.settings.allowedHosts = Array.isArray(saved?.allowedHosts)
+      ? saved.allowedHosts.filter((entry): entry is string => typeof entry === "string")
+      : [];
   }
 
   async saveSettings(): Promise<void> {
